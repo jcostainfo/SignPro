@@ -80,7 +80,10 @@ public class WebClient {
 		params.put("signatureType", "PDF");
 		params.put("DOCUMENTBASEURL", uploadUrl);
 		params.put("RUBRICAR", "false");
-		params.put("update", "true");
+		if(file.getDocid()==null || "".equals(file.getDocid()))
+			params.put("update", "false");
+		else
+			params.put("update", "true");
 		params.put("pid", file.getPid());
 		params.put("NUMASS", numass);
 		params.put("file", file.getDocid());

@@ -188,14 +188,9 @@ public class AppletSigner extends javax.swing.JApplet {
             //ThreadSCCV.start();
             cd = new CarregarDocumentos(jTable1);
             cd.setSelectedFiles(new WorkFile[0]);
-            //			try {
-//				downloadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=233D182BE134433DB9ADA94B84C9E7B9", "138", "-10", "-10", "823", "documento");
-//				downloadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=233D182BE134433DB9ADA94B84C9E7B9", "138", "-10", "-10", "823", "documento");
-//			} catch (Exception e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-	//		uploadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=FB4068C71B1A5AE4924DE48E4E2E66D6","0", (WorkFile)cd.getSelectedFiles()[0]);
+//			downloadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=233D182BE134433DB9ADA94B84C9E7B9", "138", "-10", "-10", "823", "documento");
+//			uploadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=FB4068C71B1A5AE4924DE48E4E2E66D6","0", (WorkFile)cd.getSelectedFiles()[0]);
+//          escolherDocumentos("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=F091031B850F8719309145358CA0E7A0", "138", "-10", "-10", "documento");
             popoutApplet(700,500);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.toString());
@@ -278,7 +273,8 @@ public class AppletSigner extends javax.swing.JApplet {
                 jButton1ActionPerformed(evt);
             }
         });
-        mainPanel.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(573, 14, 191, -1));
+        //disable Escolher documentos dutton
+        //mainPanel.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(573, 14, 191, -1));
         mainPanel.add(jSeparator1, new org.netbeans.lib.awtextra.AbsoluteConstraints(12, 49, 752, 10));
 
         jTable1.setModel(new javax.swing.table.DefaultTableModel(
@@ -286,7 +282,7 @@ public class AppletSigner extends javax.swing.JApplet {
 
             },
             new String [] {
-                "Nome", "Tipo", "AÃ§Ã£o"
+                "Nome", "Tipo", "Acção"
             }
         ) {
             Class[] types = new Class [] {
@@ -324,7 +320,8 @@ public class AppletSigner extends javax.swing.JApplet {
                 btCancelarActionPerformed(evt);
             }
         });
-        mainPanel.add(btCancelar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 490, 752, 50));
+        //disable Cancelar button
+        //mainPanel.add(btCancelar, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 490, 752, 50));
 
         jButton3.setText("Carregar documentos no processo");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
@@ -337,7 +334,7 @@ public class AppletSigner extends javax.swing.JApplet {
         jLabel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Rubrica"));
         mainPanel.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(12, 272, 246, 133));
 
-        jcb1.setText("Rubrica visÃ­vel");
+        jcb1.setText("Rubrica visível");
         jcb1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jcb1ActionPerformed(evt);
@@ -361,7 +358,7 @@ public class AppletSigner extends javax.swing.JApplet {
         });
         mainPanel.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(597, 278, 167, -1));
 
-        btAssinar.setText("Assinar primeiro / Ãºnico");
+        btAssinar.setText("Assinar primeiro / Único");
         btAssinar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btAssinarActionPerformed(evt);
@@ -390,8 +387,6 @@ public class AppletSigner extends javax.swing.JApplet {
         this.setVisible(true);
         this.repaint();
     }
-    
-    
     
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         cd = new CarregarDocumentos(jTable1);
@@ -536,12 +531,32 @@ public class AppletSigner extends javax.swing.JApplet {
         }
     }//GEN-LAST:event_jcb2ActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_jButton3ActionPerformed
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {
+    	try {
+    		for(File f:this.cd.getSelectedFiles())
+    			uploadFile(documentServiceUrl, cookie, "0", (WorkFile)f);
+    		JOptionPane.showMessageDialog(this, "Documentos carregados com sucesso!");
+            cd.initializeFileList(new WorkFile[0]); 
+		} catch (IOException | PrivilegedActionException e) {
+			Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, e);
+			JOptionPane.showMessageDialog(this, e.toString());			
+		}    	
+    }
 
-
-        public void downloadFile(String documentServiceUrl, String cookie, String fid, String pid,
+    public void escolherDocumentos(String documentServiceUrl, String cookie, String fid, String pid, String subpid, String variable) throws PrivilegedActionException{
+    	this.documentServiceUrl=documentServiceUrl;
+    	this.cookie=cookie;
+    	AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
+	        public String run() throws ParseException, IOException {
+	        	cd = new CarregarDocumentos(jTable1, fid, pid, subpid, variable);
+	            cd.setVisible(true);
+	            return "OK";
+	        }
+	      });
+    	        
+    }
+        
+    public void downloadFile(String documentServiceUrl, String cookie, String fid, String pid,
 			String subpid, String docid, String variable) throws ParseException, IOException, PrivilegedActionException{
     	this.documentServiceUrl=documentServiceUrl;
     	this.cookie=cookie;
@@ -575,11 +590,11 @@ public class AppletSigner extends javax.swing.JApplet {
     private void uploadFile(String documentServiceUrl, String cookie, String numass, WorkFile f) throws FileNotFoundException, IOException, PrivilegedActionException{
     	String result = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
 			public String run() throws IOException {
-				WebClient.uploadFile(documentServiceUrl, cookie, f, numass);
-				return f.getFilename();
+				return WebClient.uploadFile(documentServiceUrl, cookie, f, numass);				
 			}
 		}); 
-    	
+    	if (result ==null)
+    		throw new IOException("Upload error");
     }
     
     
