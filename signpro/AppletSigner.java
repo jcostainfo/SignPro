@@ -5,33 +5,56 @@
  */
 package signpro;
 
-import com.infosistema.iflow.service.WebClient;
-import com.infosistema.iflow.service.WorkFile;
-import com.itextpdf.text.BaseColor;
-import com.itextpdf.text.Chunk;
+import java.awt.Container;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.security.Security;
 import java.security.cert.Certificate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+
+import org.apache.commons.io.IOUtils;
 import org.poreid.config.POReIDConfig;
-import com.itextpdf.text.Document;
+import org.poreid.crypto.POReIDProvider;
+
+import com.infosistema.iflow.service.WebClient;
+import com.infosistema.iflow.service.WorkFile;
+import com.itextpdf.text.BaseColor;
+import com.itextpdf.text.Chunk;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.ColumnText;
-import com.itextpdf.text.pdf.PdfAnnotation;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfSignatureAppearance;
 import com.itextpdf.text.pdf.PdfStamper;
-import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.security.CrlClient;
 import com.itextpdf.text.pdf.security.CrlClientOnline;
 import com.itextpdf.text.pdf.security.ExternalDigest;
@@ -49,49 +72,8 @@ import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
 import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ParseException;
 
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.Security;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageOutputStream;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-
 import nosqlconnection.db.MyConnection;
-import org.apache.commons.io.IOUtils;
-import org.poreid.config.POReIDConfig;
-import org.poreid.crypto.POReIDProvider;
-import org.poreid.json.JSONObject;
 import signpro.auxiliar.Utils;
-import signpro.threads.ThreadStartCCVars;
 
 /**
  *
@@ -188,10 +170,12 @@ public class AppletSigner extends javax.swing.JApplet {
             //ThreadSCCV.start();
             cd = new CarregarDocumentos(jTable1);
             cd.setSelectedFiles(new WorkFile[0]);
-//			downloadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=233D182BE134433DB9ADA94B84C9E7B9", "138", "-10", "-10", "823", "documento");
-//			uploadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=FB4068C71B1A5AE4924DE48E4E2E66D6","0", (WorkFile)cd.getSelectedFiles()[0]);
-//          escolherDocumentos("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=F091031B850F8719309145358CA0E7A0", "138", "-10", "-10", "documento");
             popoutApplet(700,500);
+//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=21DCB4B6BEFA1A69DF10F01268B7EE3F", "138", "812", "1", "886", "documento");
+//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=21DCB4B6BEFA1A69DF10F01268B7EE3F", "138", "812", "1", "887", "documento");
+//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=21DCB4B6BEFA1A69DF10F01268B7EE3F", "138", "812", "1", "888", "documento");
+//			uploadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=FB4068C71B1A5AE4924DE48E4E2E66D6","0", (WorkFile)cd.getSelectedFiles()[0]);
+//          escolherDocumentos("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=39E19DFF6652D28CF66B3DE0502B1106", "138", "810", "1", "documento");
             frameSetVisible(false);
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, ex.toString());
@@ -214,7 +198,7 @@ public class AppletSigner extends javax.swing.JApplet {
         if (frame == null){
     //first time popped - create the frame
             frame = new JFrame();
-            frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+            frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
             frame.setSize(largura, altura);
             //frame.setIconImage(ImageLoader.getLogoImage());
             //frame.addWindowListener(new FrameCloser());           
@@ -222,7 +206,7 @@ public class AppletSigner extends javax.swing.JApplet {
     //createPopMessage() just creates a new JPanel
     //that says "the applet is being displayed in a separate frame"
         }
-        getContentPane().remove(mainPanel);
+        super.getContentPane().remove(mainPanel);
         //getContentPane().add("popMessage", BorderLayout.CENTER);
         frame.getContentPane().add(mainPanel);
         frame.pack();
@@ -234,6 +218,7 @@ public class AppletSigner extends javax.swing.JApplet {
         //frame.setSize(screenSize.width, screenSize.height);
         frame.setLocation(0,0);
         frame.setVisible(true);
+        //frame.setAlwaysOnTop(true);
         //isPopped = true;
         invalidate();
         validate();
@@ -242,8 +227,19 @@ public class AppletSigner extends javax.swing.JApplet {
 	
     public void frameSetVisible(Boolean show){
     	frame.setVisible(show);
+    	frame.toFront();
     	repaint();
     }    
+    
+    public void frameMaximize(){
+    	frame.setState(Frame.NORMAL);
+    	frame.setVisible(true);
+    	repaint();
+    } 
+    
+    protected void executeScript(String script) {	    
+    	com.infosistema.iflow.service.JSObject.getWindow(this).eval(script);	    
+    }
     
     /**
      * This method is called from within the init() method to initialize the
@@ -380,10 +376,12 @@ public class AppletSigner extends javax.swing.JApplet {
             }
         });
         mainPanel.add(btAssinarSelects, new org.netbeans.lib.awtextra.AbsoluteConstraints(597, 313, 167, 80));
-		getContentPane().add(mainPanel);
+		super.getContentPane().add(mainPanel);
     }// </editor-fold>//GEN-END:initComponents
 
-
+    public Container getContentPane(){
+    	return this.frame.getContentPane();
+    }
     
     public void hideMe(){
         this.setVisible(false);
@@ -468,7 +466,7 @@ public class AppletSigner extends javax.swing.JApplet {
 //        this.stop();
 //        this.setVisible(false);     
     	cd.initializeFileList(new WorkFile[0]);
-    	frameSetVisible(true);
+    	frameSetVisible(false);
     	
     }//GEN-LAST:event_btCancelarActionPerformed
 
@@ -506,6 +504,7 @@ public class AppletSigner extends javax.swing.JApplet {
             
             //FileOutputStream fos = new FileOutputStream("/home/prego/test_sign.pdf");
             //fos.write(bs);
+            JOptionPane.showMessageDialog(this, "Documentos assinados com sucesso!");
             cd.initializeFileList(new WorkFile[0]);
             frameSetVisible(false);
         } catch (FileNotFoundException ex) {
@@ -544,11 +543,14 @@ public class AppletSigner extends javax.swing.JApplet {
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {
     	try {
-    		for(File f:this.cd.getSelectedFiles())
-    			uploadFile(documentServiceUrl, cookie, "0", (WorkFile)f);
+    		for(File f:this.cd.getSelectedFiles()){
+    			String docid =uploadFile(documentServiceUrl, cookie, "0", (WorkFile)f);
+    			String status = "{\"status\":\"complete\",\"result\":{\"name\":\"" + ((WorkFile)f).getFilename() + "\",\"id\":\"" +docid+ "\",\"varname\":\"" +((WorkFile)f).getVariable()+ "\"}}";
+    			this.executeScript("setTimeout('updateForm(\\'"+status+"\\')', 100);");
+    		}
     		JOptionPane.showMessageDialog(this, "Documentos carregados com sucesso!");
             cd.initializeFileList(new WorkFile[0]); 
-            frameSetVisible(false);
+            frameSetVisible(false);            
 		} catch (IOException | PrivilegedActionException e) {
 			Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, e);
 			JOptionPane.showMessageDialog(this, e.toString());			
@@ -558,6 +560,7 @@ public class AppletSigner extends javax.swing.JApplet {
     public void escolherDocumentos(String documentServiceUrl, String cookie, String fid, String pid, String subpid, String variable) throws PrivilegedActionException{
     	this.documentServiceUrl=documentServiceUrl;
     	this.cookie=cookie;
+    	this.frameSetVisible(true);
     	AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
 	        public String run() throws ParseException, IOException {
 	        	cd = new CarregarDocumentos(jTable1, fid, pid, subpid, variable);
@@ -572,7 +575,7 @@ public class AppletSigner extends javax.swing.JApplet {
 			String subpid, String docid, String variable) throws ParseException, IOException, PrivilegedActionException{
     	this.documentServiceUrl=documentServiceUrl;
     	this.cookie=cookie;
-    	this.frameSetVisible(true);
+    	this.frameSetVisible(true);    	
     	Logger.getLogger(AppletSigner.class.getName()).log(Level.FINE, "AppletSigner.downloadFile START", documentServiceUrl+" "+ cookie+" "+ fid+" "+ pid+" "+ subpid+" "+ docid+" "+ variable);
     	String result = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
     	        public String run() throws ParseException, IOException {
@@ -581,7 +584,9 @@ public class AppletSigner extends javax.swing.JApplet {
                 	Logger.getLogger(AppletSigner.class.getName()).log(Level.FINE, "AppletSigner.downloadFile END", docid);
                 	return docid;
     	        }
-    	      });    	
+    	      });    
+//    	if(result!=null)
+//    		JOptionPane.showMessageDialog(frame, "Documento carregado com sucesso");
     }     
     
     public void downloadFile(String documentServiceUrl, String cookie, String fid, String pid,
@@ -600,7 +605,7 @@ public class AppletSigner extends javax.swing.JApplet {
 		}); 
     }
     
-    private void uploadFile(String documentServiceUrl, String cookie, String numass, WorkFile f) throws FileNotFoundException, IOException, PrivilegedActionException{
+    private String uploadFile(String documentServiceUrl, String cookie, String numass, WorkFile f) throws FileNotFoundException, IOException, PrivilegedActionException{
     	String result = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
 			public String run() throws IOException {
 				return WebClient.uploadFile(documentServiceUrl, cookie, f, numass);				
@@ -608,6 +613,7 @@ public class AppletSigner extends javax.swing.JApplet {
 		}); 
     	if (result ==null)
     		throw new IOException("Upload error");
+    	return result;
     }
     
     
