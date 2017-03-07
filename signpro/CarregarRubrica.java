@@ -47,8 +47,8 @@ import net.coobird.thumbnailator.name.Rename;
 import nosqlconnection.db.MyConnection;
 import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
-import signpro.aux.ButtonColumn;
-import signpro.aux.Utils;
+import signpro.auxiliar.ButtonColumn;
+import signpro.auxiliar.Utils;
 
 /**
  *
@@ -173,12 +173,12 @@ public class CarregarRubrica extends javax.swing.JFrame {
                 File f = new File(file.getName());
                 OutputStream os = new FileOutputStream(f);
                 os.write(img);
-                List <File> lstF = Thumbnails.of(f).size(160, 60).outputFormat("jpg").asFiles(Rename.PREFIX_DOT_THUMBNAIL);  
+                List <File> lstF = Thumbnails.of(f).size(160, 70).outputFormat("jpg").asFiles(Rename.PREFIX_DOT_THUMBNAIL);  
                 
                 InputStream iis = new FileInputStream(lstF.get(0));
                 byte[] mmb = IOUtils.toByteArray(iis);
-                //FileOutputStream fos = new FileOutputStream("/home/prego/ass.jpg");
-                //fos.write(mmb);
+                FileOutputStream fos = new FileOutputStream("/home/prego/ass.jpg");
+                fos.write(mmb);
                 as.setRub(mmb);
                 //END: ajustar dimensao da imagem
                 
