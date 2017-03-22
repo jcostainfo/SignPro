@@ -5,10 +5,13 @@
  */
 package signpro;
 
+import com.infosistema.iflow.service.WebClient;
 import com.mongodb.BasicDBObject;
 import com.mongodb.gridfs.GridFS;
 import com.mongodb.gridfs.GridFSDBFile;
 import com.mongodb.gridfs.GridFSInputFile;
+import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ParseException;
+
 import java.awt.Cursor;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -28,6 +31,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -47,8 +53,8 @@ import net.coobird.thumbnailator.name.Rename;
 import nosqlconnection.db.MyConnection;
 import org.apache.commons.io.IOUtils;
 import org.bson.types.ObjectId;
-import signpro.aux.ButtonColumn;
-import signpro.aux.Utils;
+import signpro.auxiliar.ButtonColumn;
+import signpro.auxiliar.Utils;
 
 /**
  *
@@ -160,60 +166,119 @@ public class CarregarRubrica extends javax.swing.JFrame {
         if(evt.getActionCommand().equals("ApproveSelection")){
             
             try {
-                File file = fc.getSelectedFile();
-                InputStream is = new FileInputStream(file);
-                byte[] img = IOUtils.toByteArray(is);
+            	String result = AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
+        	        public String run() throws ParseException, IOException {
+        	        	File file = fc.getSelectedFile();
+                        InputStream is = new FileInputStream(file);
+                        byte[] img = IOUtils.toByteArray(is);
+                        
+                        Image image = Toolkit.getDefaultToolkit().createImage(img);
+                        ImageIcon ii = new ImageIcon(image);
+                        Image image2 = ii.getImage();
+                        Image img2 = Utils.getScaledImage(image2, 160, 70);
+                        
+                        //START: ajustar dimensao da imagem
+                        //File f = new File(file.getName());
+                        File f = java.io.File.createTempFile(file.getName(), null);	
+                		f.deleteOnExit();
+                        OutputStream os = new FileOutputStream(f);
+                        os.write(img);
+                        List <File> lstF = Thumbnails.of(f).size(160, 60).outputFormat("jpg").asFiles(Rename.PREFIX_DOT_THUMBNAIL);  
+                        
+                        InputStream iis = new FileInputStream(lstF.get(0));
+                        byte[] mmb = IOUtils.toByteArray(iis);
+                        //FileOutputStream fos = new FileOutputStream("/home/prego/ass.jpg");
+                        //fos.write(mmb);
+                        as.setRub(mmb);
+                        as.setHasRub(true);
+                        //END: ajustar dimensao da imagem
+                        
+                        ImageIcon ii2 = new ImageIcon(img2);
+                        jl.setIcon(ii2);
+                        
+                        WebClient.uploadRubric(as.getRubricServiceURL(), as.getCookie(), mmb, file.getName());
+                        /*
+                        //enviar para a base de dados
+                        MyConnection conn = new MyConnection("dbAMEC", "collRubricas");
+                        conn.setDB("dbAMEC");
+                        GridFS myGridFS = new GridFS(conn.getDB(),"collRubricas");
+                        
+                        //verificar se faz update ou insert
+                        GridFSDBFile fdb = myGridFS.findOne(new BasicDBObject("metadata.user", user));
+                        
+                        GridFSInputFile gfsis = myGridFS.createFile(lstF.get(0));
+                        BasicDBObject o = new BasicDBObject();
+                        o.put("user", user);
+                        o.put("inserted", new Date());
+                        gfsis.setMetaData(o);
+                        
+                        if(fdb==null){
+                            gfsis.save();
+                        }else{
+                            myGridFS.remove((ObjectId) fdb.getId());
+                            gfsis.save();
+                        }
+                        */
+        	        	return null;
+        	        }
+        	      }); 
+//                File file = fc.getSelectedFile();
+//                InputStream is = new FileInputStream(file);
+//                byte[] img = IOUtils.toByteArray(is);
+//                
+//                Image image = Toolkit.getDefaultToolkit().createImage(img);
+//                ImageIcon ii = new ImageIcon(image);
+//                Image image2 = ii.getImage();
+//                Image img2 = Utils.getScaledImage(image2, 160, 70);
+//                
+//                //START: ajustar dimensao da imagem
+//                File f = new File(file.getName());
+//                OutputStream os = new FileOutputStream(f);
+//                os.write(img);
+//                List <File> lstF = Thumbnails.of(f).size(160, 60).outputFormat("jpg").asFiles(Rename.PREFIX_DOT_THUMBNAIL);  
+//                
+//                InputStream iis = new FileInputStream(lstF.get(0));
+//                byte[] mmb = IOUtils.toByteArray(iis);
+//                //FileOutputStream fos = new FileOutputStream("/home/prego/ass.jpg");
+//                //fos.write(mmb);
+//                as.setRub(mmb);
+//                as.setHasRub(true);
+//                //END: ajustar dimensao da imagem
+//                
+//                ImageIcon ii2 = new ImageIcon(img2);
+//                jl.setIcon(ii2);
                 
-                Image image = Toolkit.getDefaultToolkit().createImage(img);
-                ImageIcon ii = new ImageIcon(image);
-                Image image2 = ii.getImage();
-                Image img2 = Utils.getScaledImage(image2, 160, 70);
-                
-                //START: ajustar dimensao da imagem
-                File f = new File(file.getName());
-                OutputStream os = new FileOutputStream(f);
-                os.write(img);
-                List <File> lstF = Thumbnails.of(f).size(160, 60).outputFormat("jpg").asFiles(Rename.PREFIX_DOT_THUMBNAIL);  
-                
-                InputStream iis = new FileInputStream(lstF.get(0));
-                byte[] mmb = IOUtils.toByteArray(iis);
-                //FileOutputStream fos = new FileOutputStream("/home/prego/ass.jpg");
-                //fos.write(mmb);
-                as.setRub(mmb);
-                //END: ajustar dimensao da imagem
-                
-                ImageIcon ii2 = new ImageIcon(img2);
-                jl.setIcon(ii2);
-                
-                //enviar para a base de dados
-                MyConnection conn = new MyConnection("dbAMEC", "collRubricas");
-                conn.setDB("dbAMEC");
-                GridFS myGridFS = new GridFS(conn.getDB(),"collRubricas");
-                
-                //verificar se faz update ou insert
-                GridFSDBFile fdb = myGridFS.findOne(new BasicDBObject("metadata.user", user));
-                
-                GridFSInputFile gfsis = myGridFS.createFile(lstF.get(0));
-                BasicDBObject o = new BasicDBObject();
-                o.put("user", user);
-                o.put("inserted", new Date());
-                gfsis.setMetaData(o);
-                
-                if(fdb==null){
-                    gfsis.save();
-                }else{
-                    myGridFS.remove((ObjectId) fdb.getId());
-                    gfsis.save();
-                }
-                
+//                //enviar para a base de dados
+//                MyConnection conn = new MyConnection("dbAMEC", "collRubricas");
+//                conn.setDB("dbAMEC");
+//                GridFS myGridFS = new GridFS(conn.getDB(),"collRubricas");
+//                
+//                //verificar se faz update ou insert
+//                GridFSDBFile fdb = myGridFS.findOne(new BasicDBObject("metadata.user", user));
+//                
+//                GridFSInputFile gfsis = myGridFS.createFile(lstF.get(0));
+//                BasicDBObject o = new BasicDBObject();
+//                o.put("user", user);
+//                o.put("inserted", new Date());
+//                gfsis.setMetaData(o);
+//                
+//                if(fdb==null){
+//                    gfsis.save();
+//                }else{
+//                    myGridFS.remove((ObjectId) fdb.getId());
+//                    gfsis.save();
+//                }
+//                
                 this.setVisible(false);
             
-                JOptionPane.showMessageDialog(this, "RÃºbrica carregada com sucesso!");
+                JOptionPane.showMessageDialog(this, "Rúbrica carregada com sucesso!");
                 
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "ERRO: " + ex.toString());
+            } catch (Exception ex) {
+				// TODO Auto-generated catch block
+				ex.printStackTrace();
+				JOptionPane.showMessageDialog(this, "ERRO: " + ex.toString());
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
-            }
+			}
             
             this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
         }

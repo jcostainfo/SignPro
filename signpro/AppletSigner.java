@@ -91,6 +91,17 @@ public class AppletSigner extends javax.swing.JApplet {
     private Certificate[] chain;
     private String documentServiceUrl;
 	private String cookie;
+	
+	public String getCookie() {
+		return cookie;
+	}
+
+	public void setCookie(String cookie) {
+		this.cookie = cookie;
+	}
+
+	private boolean hasRub;
+	private String rubricServiceURL;    
     
     /**
      * Initializes the applet AppletSigner
@@ -102,6 +113,8 @@ public class AppletSigner extends javax.swing.JApplet {
         
             lstFilesToSign = new ArrayList <> ();
             this.user = getParameter("user");
+            this.rubricServiceURL = getCodeBase().toString() + getParameter("rubricServiceURL");//"http://localhost:8080/iFlow/SignProRubric"; 
+            this.cookie = getParameter("cookie");//"JSESSIONID=407BA1D105A32E93449D38AA8C1C1344";
             
             /* Set the Nimbus look and feel */
             //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -141,28 +154,34 @@ public class AppletSigner extends javax.swing.JApplet {
                 JOptionPane.showMessageDialog(this, ex.toString());
             }
             
-            MyConnection conn = new MyConnection("dbAMEC", "collRubricas");
-            conn.setDB("dbAMEC");
-            GridFS myGridFS = new GridFS(conn.getDB(),"collRubricas");
-            
-            //verificar se tem imagem p/ rubrica
-            GridFSDBFile fdb = myGridFS.findOne(new BasicDBObject("metadata.user", user));
-            
+//            MyConnection conn = new MyConnection("dbAMEC", "collRubricas");
+//            conn.setDB("dbAMEC");
+//            GridFS myGridFS = new GridFS(conn.getDB(),"collRubricas");
+//            
+//            //verificar se tem imagem p/ rubrica
+//            GridFSDBFile fdb = myGridFS.findOne(new BasicDBObject("metadata.user", user));
+            this.setHasRub(false);
             try{
-	            InputStream is = fdb.getInputStream();
-	            rub = IOUtils.toByteArray(is);
+//	            InputStream is = fdb.getInputStream();
+//	            rub = IOUtils.toByteArray(is);
+	            rub = WebClient.downloadRubric(this.rubricServiceURL, this.cookie);
             
-	            Image image = Toolkit.getDefaultToolkit().createImage(rub);
-	            ImageIcon ii = new ImageIcon(image);
-	            Image image2 = ii.getImage();
-	            
-	            Image img2 = Utils.getScaledImage(image2, 200, 75);
-	            
-	            ImageIcon ii2 = new ImageIcon(img2);
-	            
-	            jLabel2.setIcon(ii2);
-	            jcb1.setSelected(true);
-            } catch(Exception e){}
+	            if(rub!=null && rub.length>0){
+		            Image image = Toolkit.getDefaultToolkit().createImage(rub);
+		            ImageIcon ii = new ImageIcon(image);
+		            Image image2 = ii.getImage();
+		            
+		            Image img2 = Utils.getScaledImage(image2, 200, 75);
+		            
+		            ImageIcon ii2 = new ImageIcon(img2);
+		            
+		            jLabel2.setIcon(ii2);
+		            jcb1.setSelected(true);
+		            this.setHasRub(true);
+	            }
+            } catch(Exception e){
+            	JOptionPane.showMessageDialog(this, e.toString());
+            }
             
             //KeyStore ks = KeyStore.getInstance(POReIDConfig.POREID);
             //ks.load(null);
@@ -171,9 +190,9 @@ public class AppletSigner extends javax.swing.JApplet {
             cd = new CarregarDocumentos(jTable1);
             cd.setSelectedFiles(new WorkFile[0]);
             popoutApplet(700,500);
-//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=21DCB4B6BEFA1A69DF10F01268B7EE3F", "138", "812", "1", "886", "documento");
-//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=21DCB4B6BEFA1A69DF10F01268B7EE3F", "138", "812", "1", "887", "documento");
-//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=21DCB4B6BEFA1A69DF10F01268B7EE3F", "138", "812", "1", "888", "documento");
+//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=7841609BB888773BA39A2606D1DCFC3B", "138", "812", "1", "886", "documento");
+//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=7841609BB888773BA39A2606D1DCFC3B", "138", "812", "1", "887", "documento");
+//			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=7841609BB888773BA39A2606D1DCFC3B", "138", "812", "1", "888", "documento");
 //			uploadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=FB4068C71B1A5AE4924DE48E4E2E66D6","0", (WorkFile)cd.getSelectedFiles()[0]);
 //          escolherDocumentos("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=39E19DFF6652D28CF66B3DE0502B1106", "138", "810", "1", "documento");
             frameSetVisible(false);
@@ -400,7 +419,7 @@ public class AppletSigner extends javax.swing.JApplet {
 
     private void btAssinarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btAssinarActionPerformed
         
-        this.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+    	this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         
         if (cd!=null && cd.getSelectedFiles() != null && cd.getSelectedFiles().length>0) {
 
@@ -415,7 +434,7 @@ public class AppletSigner extends javax.swing.JApplet {
                 System.out.println(b.length);
 
                 byte[] bs = null;
-                if (jcb1.isSelected()) {
+                if (jcb1.isSelected() && this.hasRub) {
                     bs = this.signPdfWithRubrica(b, f.getAbsolutePath());
                 } else {
                     bs = this.signPdf(b, f.getAbsolutePath());
@@ -444,7 +463,7 @@ public class AppletSigner extends javax.swing.JApplet {
 			} finally {
                 try {
                     is.close();
-                    this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+                    this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
                 } catch (IOException ex) {
                     JOptionPane.showMessageDialog(this, ex.toString());
                     this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -479,25 +498,36 @@ public class AppletSigner extends javax.swing.JApplet {
     private void btAssinarSelectsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btAssinarSelectsActionPerformed
         InputStream is = null;
         try {
+        	this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
             //selecionar docs para assinar
             File[] ftos = this.cd.getSelectedFiles();
             List <File> lstFiles = new ArrayList <> (Arrays.asList(ftos));
             this.lstFilesToSign = new ArrayList <> ();
             
             //popular com os selecionados
+            if(idsels==null){
+            	JOptionPane.showMessageDialog(this, "Não foram selecionados documentos!");
+            	return;
+            }
             for(int i : idsels){
                 lstFilesToSign.add(this.cd.getSelectedFiles()[i]);
             }
+            
+            if(lstFilesToSign.size()==0)
+            	JOptionPane.showMessageDialog(this, "Não foram selecionados documentos!");
             
             //assinar apenas os selecionados
             for(File f : lstFilesToSign){
                 is = new FileInputStream(f);
                 byte[] b = IOUtils.toByteArray(is);
                 System.out.println(b.length);
-            
-                byte[] bs = this.signPdfWithRubrica(b, f.getAbsolutePath());
-                System.out.println(bs.length);
+                byte[] bs;
+                if (jcb1.isSelected() && this.hasRub)
+                	bs = this.signPdfWithRubrica(b, f.getAbsolutePath());
+                else 
+                	bs = this.signPdf(b, f.getAbsolutePath());
                 
+                System.out.println(bs.length);
                 WorkFile wf = (WorkFile) WorkFile.createClientSideWorkFile(((WorkFile)f).getFid(), ((WorkFile)f).getPid(), ((WorkFile)f).getSubpid(), ((WorkFile)f).getDocid(), ((WorkFile)f).getVariable(), new ByteArrayInputStream(bs), ((WorkFile)f).getFilename());
                 uploadFile(documentServiceUrl, cookie, "0", wf);
             }
@@ -516,6 +546,7 @@ public class AppletSigner extends javax.swing.JApplet {
         } catch (PrivilegedActionException e) {
         	Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, e);
 		} finally {
+			this.getContentPane().setCursor(Cursor.getDefaultCursor());
             try {
                 is.close();
             } catch (IOException ex) {
@@ -545,8 +576,8 @@ public class AppletSigner extends javax.swing.JApplet {
     	try {
     		for(File f:this.cd.getSelectedFiles()){
     			String docid =uploadFile(documentServiceUrl, cookie, "0", (WorkFile)f);
-    			String status = "{\"status\":\"complete\",\"result\":{\"name\":\"" + ((WorkFile)f).getFilename() + "\",\"id\":\"" +docid+ "\",\"varname\":\"" +((WorkFile)f).getVariable()+ "\"}}";
-    			this.executeScript("setTimeout('updateForm(\\'"+status+"\\')', 100);");
+//    			String status = "{\"status\":\"complete\",\"result\":{\"name\":\"" + ((WorkFile)f).getFilename() + "\",\"id\":\"" +docid+ "\",\"varname\":\"" +((WorkFile)f).getVariable()+ "\"}}";
+//    			this.executeScript("setTimeout('updateForm(\\'"+status+"\\')', 100);");
     		}
     		JOptionPane.showMessageDialog(this, "Documentos carregados com sucesso!");
             cd.initializeFileList(new WorkFile[0]); 
@@ -610,9 +641,14 @@ public class AppletSigner extends javax.swing.JApplet {
 			public String run() throws IOException {
 				return WebClient.uploadFile(documentServiceUrl, cookie, f, numass);				
 			}
-		}); 
+		});    	
     	if (result ==null)
     		throw new IOException("Upload error");
+    	else{
+    		String status = "{\"status\":\"complete\",\"result\":{\"name\":\"" + ((WorkFile)f).getFilename() + "\",\"id\":\"" +result+ "\",\"varname\":\"" +((WorkFile)f).getVariable()+ "\"}}";
+			this.executeScript("setTimeout('updateForm(\\'"+status+"\\')', 100);");
+    	}
+    		
     	return result;
     }
     
@@ -963,6 +999,27 @@ public class AppletSigner extends javax.swing.JApplet {
     public void setChain(Certificate[] chain) {
         this.chain = chain;
     }
+    
+    /**
+     * @return the hasRub
+     */
+    public boolean isHasRub() {
+        return hasRub;
+    }
 
+    /**
+     * @param hasRub the hasRub to set
+     */
+    public void setHasRub(boolean hasRub) {
+        this.hasRub = hasRub;
+    }
+
+	public String getRubricServiceURL() {
+		return rubricServiceURL;
+	}
+
+	public void setRubricServiceURL(String rubricServiceURL) {
+		this.rubricServiceURL = rubricServiceURL;
+	}
     
 }
