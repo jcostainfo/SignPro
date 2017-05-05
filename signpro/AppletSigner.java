@@ -180,7 +180,7 @@ public class AppletSigner extends javax.swing.JApplet {
 		            this.setHasRub(true);
 	            }
             } catch(Exception e){
-            	JOptionPane.showMessageDialog(this, e.toString());
+            	//JOptionPane.showMessageDialog(this, e.toString());
             }
             
             //KeyStore ks = KeyStore.getInstance(POReIDConfig.POREID);
@@ -197,7 +197,7 @@ public class AppletSigner extends javax.swing.JApplet {
 //          escolherDocumentos("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=39E19DFF6652D28CF66B3DE0502B1106", "138", "810", "1", "documento");
             frameSetVisible(false);
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, ex.toString());
+        	JOptionPane.showMessageDialog(this, ex.toString());
         }// catch (KeyStoreException ex) {
         //    Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, ex);
         //} catch (NoSuchAlgorithmException ex) {
@@ -440,13 +440,13 @@ public class AppletSigner extends javax.swing.JApplet {
                     bs = this.signPdf(b, f.getAbsolutePath());
                 }
                 WorkFile wf = (WorkFile) WorkFile.createClientSideWorkFile(((WorkFile)f).getFid(), ((WorkFile)f).getPid(), ((WorkFile)f).getSubpid(), ((WorkFile)f).getDocid(), ((WorkFile)f).getVariable(), new ByteArrayInputStream(bs), ((WorkFile)f).getFilename());
-                uploadFile(documentServiceUrl, cookie, "0", wf);
+                this.executeScript("changeFileState(" +wf.getDocid()+ ")");
+                uploadFile(documentServiceUrl, cookie, "1", wf);
 
 //                FileOutputStream fos = new FileOutputStream("/home/prego/test_sign.pdf");
 //                fos.write(bs);
 
-                JOptionPane.showMessageDialog(this, "Documento assinado com sucesso!");
-                cd.initializeFileList(new WorkFile[0]); 
+                JOptionPane.showMessageDialog(this, "Documento assinado com sucesso!");                 
 				frameSetVisible(false);
             } catch (FileNotFoundException ex) {
                 JOptionPane.showMessageDialog(this, ex.toString());
@@ -460,7 +460,15 @@ public class AppletSigner extends javax.swing.JApplet {
             } catch (PrivilegedActionException e) {
             	JOptionPane.showMessageDialog(this, e.toString());
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+			} catch (Exception e) {
+            	JOptionPane.showMessageDialog(this, e.toString() + "Não foi possível assinar o documento");
+                this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			} finally {
+				//set files to show
+                WorkFile[] updatedFileList = new WorkFile[cd.getSelectedFiles().length-1];
+                for(int i=1; i<cd.getSelectedFiles().length; i++)
+                	updatedFileList[i-1] = (WorkFile) cd.getSelectedFiles()[i];
+                cd.initializeFileList(updatedFileList);
                 try {
                     is.close();
                     this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -498,8 +506,7 @@ public class AppletSigner extends javax.swing.JApplet {
     private void btAssinarSelectsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btAssinarSelectsActionPerformed
         InputStream is = null;
         try {
-        	this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            //selecionar docs para assinar
+        	//selecionar docs para assinar
             File[] ftos = this.cd.getSelectedFiles();
             List <File> lstFiles = new ArrayList <> (Arrays.asList(ftos));
             this.lstFilesToSign = new ArrayList <> ();
@@ -509,6 +516,9 @@ public class AppletSigner extends javax.swing.JApplet {
             	JOptionPane.showMessageDialog(this, "Não foram selecionados documentos!");
             	return;
             }
+            
+            this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));            
+            
             for(int i : idsels){
                 lstFilesToSign.add(this.cd.getSelectedFiles()[i]);
             }
@@ -529,23 +539,40 @@ public class AppletSigner extends javax.swing.JApplet {
                 
                 System.out.println(bs.length);
                 WorkFile wf = (WorkFile) WorkFile.createClientSideWorkFile(((WorkFile)f).getFid(), ((WorkFile)f).getPid(), ((WorkFile)f).getSubpid(), ((WorkFile)f).getDocid(), ((WorkFile)f).getVariable(), new ByteArrayInputStream(bs), ((WorkFile)f).getFilename());
-                uploadFile(documentServiceUrl, cookie, "0", wf);
+                this.executeScript("changeFileState(" +wf.getDocid()+ ")");
+                uploadFile(documentServiceUrl, cookie, "1", wf);
             }
             
             //FileOutputStream fos = new FileOutputStream("/home/prego/test_sign.pdf");
             //fos.write(bs);
-            JOptionPane.showMessageDialog(this, "Documentos assinados com sucesso!");
-            cd.initializeFileList(new WorkFile[0]);
+            JOptionPane.showMessageDialog(this, "Documentos assinados com sucesso!");                        
             frameSetVisible(false);
         } catch (FileNotFoundException ex) {
+        	JOptionPane.showMessageDialog(this, ex.toString());
             Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, ex);
         } catch (IOException ex) {
+        	JOptionPane.showMessageDialog(this, ex.toString() );
             Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, ex);
         } catch (DocumentException | GeneralSecurityException ex) {
+        	JOptionPane.showMessageDialog(this, ex.toString());
             Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, ex);
         } catch (PrivilegedActionException e) {
+        	JOptionPane.showMessageDialog(this, e.toString());
         	Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, e);
+		} catch(Exception e){   
+			JOptionPane.showMessageDialog(this, e.toString() + "Não foi possível assinar o documento");
 		} finally {
+			//update list to show
+            ArrayList<WorkFile> updatedFileList = new ArrayList<WorkFile>();
+            for(int i=0; i<cd.getSelectedFiles().length; i++){
+            	boolean keep=true;
+            	for(int j=0; j<idsels.length; j++)
+            		if(i==idsels[j])
+            			keep=false;
+            	if(keep)
+            		updatedFileList.add((WorkFile)cd.getSelectedFiles()[i]);
+            }            
+            cd.initializeFileList(updatedFileList.toArray(new WorkFile[0]));
 			this.getContentPane().setCursor(Cursor.getDefaultCursor());
             try {
                 is.close();
@@ -757,16 +784,29 @@ public class AppletSigner extends javax.swing.JApplet {
 
             } else {
                 
-                PdfContentByte cb = stamper.getOverContent(totPages);
-                Rectangle rect = new Rectangle(rp.getLeft() + 40+(assNumber*130)+20, rp.getBottom() + 100, rp.getLeft() + 170+(assNumber*130)+20, rp.getBottom() + 150);
-                ColumnText ct = new ColumnText(cb);
+//                PdfContentByte cb = stamper.getOverContent(totPages);
+//                Rectangle rect = new Rectangle(rp.getLeft() + 40+(assNumber*130)+20, rp.getBottom() + 100, rp.getLeft() + 170+(assNumber*130)+20, rp.getBottom() + 150);
+//                ColumnText ct = new ColumnText(cb);
+//                Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
+//                ct.setSimpleColumn(rect2);
+//                Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
+//                ct.addElement(new Paragraph(t));
+//                ct.go(); //<--
+//                cb.rectangle(rect2);
+//                appearance.setVisibleSignature(rect, totPages, "mysignature"+assNumber);
+            	PdfContentByte cb = stamper.getOverContent(totPages);
+
                 Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
+                //rect2.setBorder(Rectangle.BOX);
+                //rect2.setBorderWidth(1);
+
+                ColumnText ct = new ColumnText(cb);
                 ct.setSimpleColumn(rect2);
-                Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
+                Chunk t = new Chunk("(Doc. assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
                 ct.addElement(new Paragraph(t));
-                ct.go(); //<--
+                ct.go();
                 cb.rectangle(rect2);
-                appearance.setVisibleSignature(rect, totPages, "mysignature"+assNumber);
+                cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
             }
             
             appearance.setSignatureGraphic(com.itextpdf.text.Image.getInstance(rub));
