@@ -465,10 +465,10 @@ public class AppletSigner extends javax.swing.JApplet {
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			} finally {
 				//set files to show
-                WorkFile[] updatedFileList = new WorkFile[cd.getSelectedFiles().length-1];
-                for(int i=1; i<cd.getSelectedFiles().length; i++)
-                	updatedFileList[i-1] = (WorkFile) cd.getSelectedFiles()[i];
-                cd.initializeFileList(updatedFileList);
+//                WorkFile[] updatedFileList = new WorkFile[cd.getSelectedFiles().length-1];
+//                for(int i=1; i<cd.getSelectedFiles().length; i++)
+//                	updatedFileList[i-1] = (WorkFile) cd.getSelectedFiles()[i];
+                cd.initializeFileList(new WorkFile[0]);
                 try {
                     is.close();
                     this.getContentPane().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -563,16 +563,17 @@ public class AppletSigner extends javax.swing.JApplet {
 			JOptionPane.showMessageDialog(this, e.toString() + "N„o foi possÌvel assinar o documento");
 		} finally {
 			//update list to show
-            ArrayList<WorkFile> updatedFileList = new ArrayList<WorkFile>();
-            for(int i=0; i<cd.getSelectedFiles().length; i++){
-            	boolean keep=true;
-            	for(int j=0; j<idsels.length; j++)
-            		if(i==idsels[j])
-            			keep=false;
-            	if(keep)
-            		updatedFileList.add((WorkFile)cd.getSelectedFiles()[i]);
-            }            
-            cd.initializeFileList(updatedFileList.toArray(new WorkFile[0]));
+//            ArrayList<WorkFile> updatedFileList = new ArrayList<WorkFile>();
+//            for(int i=0; i<cd.getSelectedFiles().length; i++){
+//            	boolean keep=true;
+//            	for(int j=0; j<idsels.length; j++)
+//            		if(i==idsels[j])
+//            			keep=false;
+//            	if(keep)
+//            		updatedFileList.add((WorkFile)cd.getSelectedFiles()[i]);
+//            }            
+//            cd.initializeFileList(updatedFileList.toArray(new WorkFile[0]));
+			cd.initializeFileList(new WorkFile[0]);
 			this.getContentPane().setCursor(Cursor.getDefaultCursor());
             try {
                 is.close();
@@ -606,7 +607,8 @@ public class AppletSigner extends javax.swing.JApplet {
 //    			String status = "{\"status\":\"complete\",\"result\":{\"name\":\"" + ((WorkFile)f).getFilename() + "\",\"id\":\"" +docid+ "\",\"varname\":\"" +((WorkFile)f).getVariable()+ "\"}}";
 //    			this.executeScript("setTimeout('updateForm(\\'"+status+"\\')', 100);");
     		}
-    		JOptionPane.showMessageDialog(this, "Documentos carregados com sucesso!");
+    		if(this.cd.getSelectedFiles().length>0)
+    			JOptionPane.showMessageDialog(this, "Documentos carregados com sucesso!");
             cd.initializeFileList(new WorkFile[0]); 
             frameSetVisible(false);            
 		} catch (IOException | PrivilegedActionException e) {
@@ -710,6 +712,7 @@ public class AppletSigner extends javax.swing.JApplet {
 
         // reader and stamper
         PdfReader reader = new PdfReader(src);
+        Rectangle rp = reader.getPageSize(1);
         File f = new File(fileName);
         OutputStream os = new FileOutputStream(f);
         PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0');
@@ -718,7 +721,8 @@ public class AppletSigner extends javax.swing.JApplet {
         PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
         appearance.setReason("qualquer motivo");
         appearance.setLocation("qualquer localiza√ß√£o");
-        appearance.setVisibleSignature(new Rectangle(72, 732, 144, 780), 1, "primeira assinatura");
+        appearance.setVisibleSignature(new Rectangle(rp.getLeft() + 50+(0*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(0*130)+20, rp.getBottom() + 118), 1, "primeira assinatura");
+        //appearance.setVisibleSignature(new Rectangle(72, 732, 144, 780), 1, "primeira assinatura");
 
         // digital signature
         ExternalSignature es = new PrivateKeySignature(pk, "SHA-256", POReIDConfig.POREID);
