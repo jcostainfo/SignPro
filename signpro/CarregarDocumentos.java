@@ -37,6 +37,39 @@ public class CarregarDocumentos extends javax.swing.JFrame {
     private File[] selectedFiles;
     private JTable jt;
 	private String fid;
+	public String getFid() {
+		return fid;
+	}
+
+	public void setFid(String fid) {
+		this.fid = fid;
+	}
+
+	public String getPid() {
+		return pid;
+	}
+
+	public void setPid(String pid) {
+		this.pid = pid;
+	}
+
+	public String getSubpid() {
+		return subpid;
+	}
+
+	public void setSubpid(String subpid) {
+		this.subpid = subpid;
+	}
+
+	public String getVariable() {
+		return variable;
+	}
+
+	public void setVariable(String variable) {
+		this.variable = variable;
+	}
+
+
 	private String pid;
 	private String subpid;
 	private String variable;
@@ -146,7 +179,7 @@ public class CarregarDocumentos extends javax.swing.JFrame {
     public void addToFileList(File[] newSelectedFiles){
     	DefaultTableModel dtm = (DefaultTableModel) jt.getModel();
     	List <File> aaux = new ArrayList <> (Arrays.asList(this.selectedFiles));
-    	
+    	Logger.getLogger(CarregarDocumentos.class.getName()).log(Level.FINE, "CarregarDocumentos.addToFileList aaux size:", aaux.size());
         for(File f : newSelectedFiles){
             String[] auxRow = {((WorkFile)f).getFilename(), this.getMIMEType(((WorkFile)f).getFilename().replaceAll(".*.\\.", ".")), "Remover"};
             ButtonColumn buttonColumn = new ButtonColumn(jt, delete, 2);
@@ -154,7 +187,9 @@ public class CarregarDocumentos extends javax.swing.JFrame {
             dtm.addRow(auxRow);
             aaux.add(f);
         }        
-        this.selectedFiles = aaux.toArray(new File[aaux.size()]);                
+        
+        this.selectedFiles = aaux.toArray(new File[aaux.size()]);  
+        Logger.getLogger(CarregarDocumentos.class.getName()).log(Level.FINE, "CarregarDocumentos.addToFileList selectedFiles size:", selectedFiles.length);
     }
     
     private void jFileChooser1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jFileChooser1ActionPerformed
@@ -163,11 +198,11 @@ public class CarregarDocumentos extends javax.swing.JFrame {
 	        
 	        JFileChooser fc = (JFileChooser) evt.getSource();
 	        if(evt.getActionCommand().equals("ApproveSelection")){
-	            this.selectedFiles = fc.getSelectedFiles();
+	            //this.selectedFiles = fc.getSelectedFiles();
 	            
 	            DefaultTableModel dtm = (DefaultTableModel) jt.getModel();
 	            
-	            for(File f : selectedFiles){
+	            for(File f : fc.getSelectedFiles()){
 	                String[] auxRow = {f.getName(), this.getMIMEType(f.getName().replaceAll(".*.\\.", ".")), "Remover"};
 	                ButtonColumn buttonColumn = new ButtonColumn(jt, delete, 2);
 	                //buttonColumn.setMnemonic(evt.VK_D);
@@ -179,13 +214,12 @@ public class CarregarDocumentos extends javax.swing.JFrame {
 	        
 	        this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 	        
-	        WorkFile[] wfs = new WorkFile[selectedFiles.length];
-	        for(int i=0; i< selectedFiles.length; i++){
-	        	File f = selectedFiles[i];
+	        List <File> aaux = new ArrayList <> (Arrays.asList(this.selectedFiles));
+	        for(File f: fc.getSelectedFiles()){
 	        	WorkFile wf = (WorkFile) WorkFile.createClientSideWorkFile(fid, pid, subpid, null, variable, new FileInputStream(f), f.getName());
-	        	wfs[i]=wf;
+	        	aaux.add(wf);
 	        }
-	        this.selectedFiles = wfs;
+	        this.selectedFiles = aaux.toArray(new File[aaux.size()]);  
         } catch (IOException e){
         	Logger.getLogger(CarregarDocumentos.class.getName()).log(Level.SEVERE, null, e);
 			JOptionPane.showMessageDialog(this, e.toString());

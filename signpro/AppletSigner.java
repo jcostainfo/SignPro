@@ -623,7 +623,15 @@ public class AppletSigner extends javax.swing.JApplet {
     	this.frameSetVisible(true);
     	AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
 	        public String run() throws ParseException, IOException {
-	        	cd = new CarregarDocumentos(jTable1, fid, pid, subpid, variable);
+	        	if(cd == null)
+	        		cd = new CarregarDocumentos(jTable1, fid, pid, subpid, variable);
+	        	else
+	        	{
+	        		cd.setFid(fid);
+	        		cd.setPid(pid);
+	        		cd.setSubpid(subpid);
+	        		cd.setVariable(variable);
+	        	}
 	            cd.setVisible(true);
 	            return "OK";
 	        }
