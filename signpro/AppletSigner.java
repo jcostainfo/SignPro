@@ -726,7 +726,7 @@ public class AppletSigner extends javax.swing.JApplet {
         Rectangle rp = reader.getPageSize(1);
         File f = new File(fileName);
         OutputStream os = new FileOutputStream(f);
-        PdfStamper stamper = PdfStamper.createSignature(reader, os, PdfWriter.VERSION_1_7, null, true); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+        PdfStamper stamper = PdfStamper.createSignature(reader, os, PdfWriter.VERSION_1_7, null, true); 
 
         // appearance
         PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
@@ -836,7 +836,7 @@ public class AppletSigner extends javax.swing.JApplet {
 
             ExternalSignature es = new PrivateKeySignature(pk, "SHA-256", POReIDConfig.POREID);
             ExternalDigest digest = new ProviderDigest(null); // find provider
-            MakeSignature.signDetached(appearance, digest, es, chain, null, null, tsc, 0, CryptoStandard.CMS);
+            MakeSignature.signDetached(appearance, digest, es, chain, null, null, null, 0, CryptoStandard.CMS);
             
             this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             
@@ -865,11 +865,11 @@ public class AppletSigner extends javax.swing.JApplet {
             // reader and stamper
             PdfReader reader = new PdfReader(src);
             
-            ByteArrayOutputStream baos = new ByteArrayOutputStream(src.length); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
-            PdfStamper stamper = PdfStamper.createSignature(reader, baos, PdfWriter.VERSION_1_7, null, true); //<---- //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
-            PdfSignatureAppearance appearance = stamper.getSignatureAppearance(); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(src.length); 
+            PdfStamper stamper = PdfStamper.createSignature(reader, baos, PdfWriter.VERSION_1_7, null, true); 
+            PdfSignatureAppearance appearance = stamper.getSignatureAppearance(); 
             
-            appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR            
+            appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED);             
 
             int assNumber = 0;
             if(reader.getAcroFields().getSignatureNames()!=null){
@@ -878,10 +878,10 @@ public class AppletSigner extends javax.swing.JApplet {
             
             File f = new File(fileName);
             OutputStream os = new FileOutputStream(f);
-            //PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0'); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            //PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0'); 
 
             int totPages = reader.getNumberOfPages();
-            //PdfSignatureAppearance appearance = stamper.getSignatureAppearance(); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            //PdfSignatureAppearance appearance = stamper.getSignatureAppearance(); 
             Rectangle rp = reader.getPageSize(1);
             
             
@@ -934,7 +934,7 @@ public class AppletSigner extends javax.swing.JApplet {
             // digital signature
             ExternalSignature es = new PrivateKeySignature(pk, "SHA-256", POReIDConfig.POREID);
             ExternalDigest digest = new ProviderDigest(null);
-            MakeSignature.signDetached(appearance, digest, es, (java.security.cert.Certificate[]) chain, null, null, tsc, 0, CryptoStandard.CMS); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            MakeSignature.signDetached(appearance, digest, es, (java.security.cert.Certificate[]) chain, null, null, null, 0, CryptoStandard.CMS); 
 
             //ByteArrayOutputStream bos = (ByteArrayOutputStream) os;
             InputStream is = new FileInputStream(f);
