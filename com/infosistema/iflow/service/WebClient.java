@@ -308,8 +308,8 @@ public class WebClient {
 //				log.debug("Got response " + response + " for file " + f.getName()); //$NON-NLS-1$ //$NON-NLS-2$
 				retObj = response;
 
-			} catch (IOException ioex) {
-//				log.error("From (ServerResponse): " + ioex, ioex); //$NON-NLS-1$
+			} catch (Exception ioex) {
+				System.out.println("From (ServerResponse): " + ioex); //$NON-NLS-1$
 			} finally {
 				try {
 					if (in != null)

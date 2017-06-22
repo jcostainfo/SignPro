@@ -12,6 +12,7 @@ import java.awt.Frame;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -55,6 +56,7 @@ import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.PdfSignatureAppearance;
 import com.itextpdf.text.pdf.PdfStamper;
+import com.itextpdf.text.pdf.PdfWriter;
 import com.itextpdf.text.pdf.security.CrlClient;
 import com.itextpdf.text.pdf.security.CrlClientOnline;
 import com.itextpdf.text.pdf.security.ExternalDigest;
@@ -194,7 +196,7 @@ public class AppletSigner extends javax.swing.JApplet {
 //			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=7841609BB888773BA39A2606D1DCFC3B", "138", "812", "1", "887", "documento");
 //			downloadFile("http://localhost:8480/iFlow/DocumentService", "JSESSIONID=7841609BB888773BA39A2606D1DCFC3B", "138", "812", "1", "888", "documento");
 //			uploadFile("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=FB4068C71B1A5AE4924DE48E4E2E66D6","0", (WorkFile)cd.getSelectedFiles()[0]);
-//          escolherDocumentos("http://localhost:8080/iFlow/DocumentService", "JSESSIONID=39E19DFF6652D28CF66B3DE0502B1106", "138", "810", "1", "documento");
+//          escolherDocumentos("http://192.168.1.36:8480/iFlow/DocumentService", "JSESSIONID=7FD667EC8C811A98216017358C77B4C6", "277", "-10", "-10", "ficheiro");
             frameSetVisible(false);
         } catch (Exception ex) {
         	JOptionPane.showMessageDialog(this, ex.toString());
@@ -542,7 +544,7 @@ public class AppletSigner extends javax.swing.JApplet {
                 this.executeScript("changeFileState(" +wf.getDocid()+ ")");
                 uploadFile(documentServiceUrl, cookie, "1", wf);
             }
-            
+            this.lstFilesToSign = new ArrayList <> ();
             //FileOutputStream fos = new FileOutputStream("/home/prego/test_sign.pdf");
             //fos.write(bs);
             JOptionPane.showMessageDialog(this, "Documentos assinados com sucesso!");                        
@@ -621,6 +623,7 @@ public class AppletSigner extends javax.swing.JApplet {
     	this.documentServiceUrl=documentServiceUrl;
     	this.cookie=cookie;
     	this.frameSetVisible(true);
+    	cd.initializeFileList(new WorkFile[0]);
     	AccessController.doPrivileged(new PrivilegedExceptionAction<String>() {
 	        public String run() throws ParseException, IOException {
 	        	if(cd == null)
@@ -723,14 +726,19 @@ public class AppletSigner extends javax.swing.JApplet {
         Rectangle rp = reader.getPageSize(1);
         File f = new File(fileName);
         OutputStream os = new FileOutputStream(f);
-        PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0');
+        PdfStamper stamper = PdfStamper.createSignature(reader, os, PdfWriter.VERSION_1_7, null, true); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
 
         // appearance
         PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
-        appearance.setReason("qualquer motivo");
-        appearance.setLocation("qualquer localização");
-        appearance.setVisibleSignature(new Rectangle(rp.getLeft() + 50+(0*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(0*130)+20, rp.getBottom() + 118), 1, "primeira assinatura");
-        //appearance.setVisibleSignature(new Rectangle(72, 732, 144, 780), 1, "primeira assinatura");
+        
+        int assNumber = 0; //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+        if(reader.getAcroFields().getSignatureNames()!=null){ //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            assNumber = reader.getAcroFields().getSignatureNames().size(); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+        }
+        
+        appearance.setReason("Documento com necessidade de assinatura"); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+        appearance.setLocation("Gest�o de Processos"); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+        appearance.setVisibleSignature(new Rectangle(rp.getLeft() + 50+(0*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(0*130)+20, rp.getBottom() + 118), 1, "Assinatura_"+assNumber);        
 
         // digital signature
         ExternalSignature es = new PrivateKeySignature(pk, "SHA-256", POReIDConfig.POREID);
@@ -766,63 +774,54 @@ public class AppletSigner extends javax.swing.JApplet {
                 assNumber = reader.getAcroFields().getSignatureNames().size();
             }
             
-            File f = new File(fileName);
-            OutputStream os = new FileOutputStream(f);
-            PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0'); //<----
+            //File f = new File(fileName); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            //OutputStream os = new FileOutputStream(f); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(src.length); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            PdfStamper stamper = PdfStamper.createSignature(reader, baos, PdfWriter.VERSION_1_7, null, true); //<---- //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
 
             int totPages = reader.getNumberOfPages();
             PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+            appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
             Rectangle rp = reader.getPageSize(1);
             
             if (jcb2.isSelected()) {
 
                 for (int i = 1; i <= totPages; i++) {
-
-                    PdfContentByte cb = stamper.getOverContent(i);
-
-                    Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
-                    //rect2.setBorder(Rectangle.BOX);
-                    //rect2.setBorderWidth(1);
-
-                    ColumnText ct = new ColumnText(cb);
-                    ct.setSimpleColumn(rect2);
-                    Chunk t = new Chunk("(Doc. assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
-                    ct.addElement(new Paragraph(t));
-                    ct.go();
-                    cb.rectangle(rect2);
-                    cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
-
+                	if (assNumber == 0) { //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+	                    PdfContentByte cb = stamper.getOverContent(i);
+	
+	                    Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
+	                    //rect2.setBorder(Rectangle.BOX);
+	                    //rect2.setBorderWidth(1);
+	
+	                    ColumnText ct = new ColumnText(cb);
+	                    ct.setSimpleColumn(rect2);
+	                    Chunk t = new Chunk("(Doc. assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
+	                    ct.addElement(new Paragraph(t));
+	                    ct.go();
+	                    cb.rectangle(rect2);
+	                    cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
+                	}//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
                 }
 
             } else {
-                
-//                PdfContentByte cb = stamper.getOverContent(totPages);
-//                Rectangle rect = new Rectangle(rp.getLeft() + 40+(assNumber*130)+20, rp.getBottom() + 100, rp.getLeft() + 170+(assNumber*130)+20, rp.getBottom() + 150);
-//                ColumnText ct = new ColumnText(cb);
-//                Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
-//                ct.setSimpleColumn(rect2);
-//                Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
-//                ct.addElement(new Paragraph(t));
-//                ct.go(); //<--
-//                cb.rectangle(rect2);
-//                appearance.setVisibleSignature(rect, totPages, "mysignature"+assNumber);
-            	PdfContentByte cb = stamper.getOverContent(totPages);
-
-                Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
-                //rect2.setBorder(Rectangle.BOX);
-                //rect2.setBorderWidth(1);
-
-                ColumnText ct = new ColumnText(cb);
-                ct.setSimpleColumn(rect2);
-                Chunk t = new Chunk("(Doc. assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
-                ct.addElement(new Paragraph(t));
-                ct.go();
-                cb.rectangle(rect2);
-                cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
+            	if (assNumber == 0) { //<---- PEDRO: PARA ACRESCENTAR / ALTERAR 
+	            	PdfContentByte cb = stamper.getOverContent(totPages);
+	                Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
+	                ColumnText ct = new ColumnText(cb);
+	                ct.setSimpleColumn(rect2);
+	                Chunk t = new Chunk("(Doc. assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
+	                ct.addElement(new Paragraph(t));
+	                ct.go();
+	                cb.rectangle(rect2);
+	                cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
+	                appearance.setVisibleSignature(rect2, totPages, "Assinatura_" + assNumber);
+                }//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
             }
             
             appearance.setSignatureGraphic(com.itextpdf.text.Image.getInstance(rub));
             appearance.setRenderingMode(PdfSignatureAppearance.RenderingMode.GRAPHIC);
+            
             
        
             // digital signature
@@ -843,15 +842,15 @@ public class AppletSigner extends javax.swing.JApplet {
 
             ExternalSignature es = new PrivateKeySignature(pk, "SHA-256", POReIDConfig.POREID);
             ExternalDigest digest = new ProviderDigest(null); // find provider
-            MakeSignature.signDetached(appearance, digest, es, chain, null, null, null, 0, CryptoStandard.CMS);
+            MakeSignature.signDetached(appearance, digest, es, chain, null, null, tsc, 0, CryptoStandard.CMS);//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
             
             this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             
-            //ByteArrayOutputStream bos = (ByteArrayOutputStream) os;
-            InputStream is = new FileInputStream(f);
-            byte[] ba = IOUtils.toByteArray(is);
-
-            return ba;
+            //InputStream is = new FileInputStream(f);//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            //byte[] ba = IOUtils.toByteArray(is);//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            //return ba;//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            
+            return baos.toByteArray();//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
 
         }else{
             JOptionPane.showMessageDialog(this, "Primeiro tem de selecionar um documento!");
@@ -875,6 +874,12 @@ public class AppletSigner extends javax.swing.JApplet {
 
             // reader and stamper
             PdfReader reader = new PdfReader(src);
+            
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(src.length); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            PdfStamper stamper = PdfStamper.createSignature(reader, baos, PdfWriter.VERSION_1_7, null, true); //<---- //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            PdfSignatureAppearance appearance = stamper.getSignatureAppearance(); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+            
+            appearance.setCertificationLevel(PdfSignatureAppearance.NOT_CERTIFIED); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR            
 
             int assNumber = 0;
             if(reader.getAcroFields().getSignatureNames()!=null){
@@ -883,45 +888,47 @@ public class AppletSigner extends javax.swing.JApplet {
             
             File f = new File(fileName);
             OutputStream os = new FileOutputStream(f);
-            PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0');
+            //PdfStamper stamper = PdfStamper.createSignature(reader, os, '\0'); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
 
             int totPages = reader.getNumberOfPages();
-            PdfSignatureAppearance appearance = stamper.getSignatureAppearance();
+            //PdfSignatureAppearance appearance = stamper.getSignatureAppearance(); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
             Rectangle rp = reader.getPageSize(1);
             
             
             if (jcb2.isSelected()) {
 
                 for (int i = 1; i <= totPages; i++) {
+                	if (assNumber == 0) {//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
 
-                    PdfContentByte cb = stamper.getOverContent(i);
-
-                    Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
-                    //rect2.setBorder(Rectangle.BOX);
-                    //rect2.setBorderWidth(1);
-
-                    ColumnText ct = new ColumnText(cb);
-                    ct.setSimpleColumn(rect2);
-                    Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
-                    ct.addElement(new Paragraph(t));
-                    ct.go();
-                    cb.rectangle(rect2);
-                    cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
-
+	                    PdfContentByte cb = stamper.getOverContent(i);
+	
+	                    Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
+	                    //rect2.setBorder(Rectangle.BOX);
+	                    //rect2.setBorderWidth(1);
+	
+	                    ColumnText ct = new ColumnText(cb);
+	                    ct.setSimpleColumn(rect2);
+	                    Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
+	                    ct.addElement(new Paragraph(t));
+	                    ct.go();
+	                    cb.rectangle(rect2);
+	                    cb.addImage(com.itextpdf.text.Image.getInstance(rub), 130, 0, 0, 50, rp.getLeft() + 35+(assNumber*130)+20, rp.getBottom() + 111);
+                	}//<---- PEDRO: PARA ACRESCENTAR / ALTERAR	
                 }
 
             } else {
-                
-                PdfContentByte cb = stamper.getOverContent(totPages);
-                Rectangle rect = new Rectangle(rp.getLeft() + 40+(assNumber*130)+20, rp.getBottom() + 100, rp.getLeft() + 170+(assNumber*130)+20, rp.getBottom() + 150);
-                ColumnText ct = new ColumnText(cb);
-                Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
-                ct.setSimpleColumn(rect2);
-                Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
-                ct.addElement(new Paragraph(t));
-                ct.go();
-                cb.rectangle(rect2);
-                appearance.setVisibleSignature(rect, totPages, "mysignature"+assNumber);
+            	if (assNumber == 0) {//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
+	                PdfContentByte cb = stamper.getOverContent(totPages);
+	                Rectangle rect = new Rectangle(rp.getLeft() + 40+(assNumber*130)+20, rp.getBottom() + 100, rp.getLeft() + 170+(assNumber*130)+20, rp.getBottom() + 150);
+	                ColumnText ct = new ColumnText(cb);
+	                Rectangle rect2 = new Rectangle(rp.getLeft() + 50+(assNumber*130)+20, rp.getBottom() + 88, rp.getLeft() + 180+(assNumber*130)+20, rp.getBottom() + 118);
+	                ct.setSimpleColumn(rect2);
+	                Chunk t = new Chunk("(Assinado digitalmente)", new Font(Font.FontFamily.HELVETICA, 9.0f, Font.NORMAL, BaseColor.BLACK));
+	                ct.addElement(new Paragraph(t));
+	                ct.go();
+	                cb.rectangle(rect2);
+	                appearance.setVisibleSignature(rect, totPages, "Assinatura_"+assNumber);
+            	}//<---- PEDRO: PARA ACRESCENTAR / ALTERAR
             }
             
             appearance.setSignatureGraphic(com.itextpdf.text.Image.getInstance(rub));
@@ -943,7 +950,7 @@ public class AppletSigner extends javax.swing.JApplet {
             // digital signature
             ExternalSignature es = new PrivateKeySignature(pk, "SHA-256", POReIDConfig.POREID);
             ExternalDigest digest = new ProviderDigest(null);
-            MakeSignature.signDetached(appearance, digest, es, (java.security.cert.Certificate[]) chain, crlList, ocsp, tsc, 0, CryptoStandard.CMS);
+            MakeSignature.signDetached(appearance, digest, es, (java.security.cert.Certificate[]) chain, null, null, tsc, 0, CryptoStandard.CMS); //<---- PEDRO: PARA ACRESCENTAR / ALTERAR
 
             //ByteArrayOutputStream bos = (ByteArrayOutputStream) os;
             InputStream is = new FileInputStream(f);

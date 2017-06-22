@@ -219,6 +219,7 @@ public class CarregarDocumentos extends javax.swing.JFrame {
 	        	WorkFile wf = (WorkFile) WorkFile.createClientSideWorkFile(fid, pid, subpid, null, variable, new FileInputStream(f), f.getName());
 	        	aaux.add(wf);
 	        }
+	        fc.setSelectedFiles(null);
 	        this.selectedFiles = aaux.toArray(new File[aaux.size()]);  
         } catch (IOException e){
         	Logger.getLogger(CarregarDocumentos.class.getName()).log(Level.SEVERE, null, e);
