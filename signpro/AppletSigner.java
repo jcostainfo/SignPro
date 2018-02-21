@@ -307,7 +307,7 @@ public class AppletSigner extends javax.swing.JApplet {
 
             },
             new String [] {
-                "Nome", "Tipo", "AcÃ§Ã£o"
+                "Nome", "Tipo", "Acção"
             }
         ) {
             Class[] types = new Class [] {
@@ -358,7 +358,7 @@ public class AppletSigner extends javax.swing.JApplet {
         jLabel2.setBorder(javax.swing.BorderFactory.createTitledBorder("Rubrica"));
         mainPanel.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(12, 272, 246, 133));
 
-        jcb1.setText("Rubrica visÃ­vel");
+        jcb1.setText("Rubrica visível");
         jcb1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jcb1ActionPerformed(evt);
@@ -382,7 +382,7 @@ public class AppletSigner extends javax.swing.JApplet {
         });
         mainPanel.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(597, 278, 167, -1));
 
-        btAssinar.setText("Assinar primeiro / Ãšnico");
+        btAssinar.setText("Assinar primeiro / Único");
         btAssinar.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btAssinarActionPerformed(evt);
@@ -463,7 +463,7 @@ public class AppletSigner extends javax.swing.JApplet {
             	JOptionPane.showMessageDialog(this, e.toString());
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			} catch (Exception e) {
-            	JOptionPane.showMessageDialog(this, e.toString() + "NÃ£o foi possÃ­vel assinar o documento");
+            	JOptionPane.showMessageDialog(this, e.toString() + "Não foi possível assinar o documento");
                 this.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			} finally {
 				//set files to show
@@ -515,7 +515,7 @@ public class AppletSigner extends javax.swing.JApplet {
             
             //popular com os selecionados
             if(idsels==null){
-            	JOptionPane.showMessageDialog(this, "NÃ£o foram selecionados documentos!");
+            	JOptionPane.showMessageDialog(this, "Não foram selecionados documentos!");
             	return;
             }
             
@@ -526,7 +526,7 @@ public class AppletSigner extends javax.swing.JApplet {
             }
             
             if(lstFilesToSign.size()==0)
-            	JOptionPane.showMessageDialog(this, "NÃ£o foram selecionados documentos!");
+            	JOptionPane.showMessageDialog(this, "Não foram selecionados documentos!");
             
             //assinar apenas os selecionados
             for(File f : lstFilesToSign){
@@ -562,7 +562,7 @@ public class AppletSigner extends javax.swing.JApplet {
         	JOptionPane.showMessageDialog(this, e.toString());
         	Logger.getLogger(AppletSigner.class.getName()).log(Level.SEVERE, null, e);
 		} catch(Exception e){   
-			JOptionPane.showMessageDialog(this, e.toString() + "NÃ£o foi possÃ­vel assinar o documento");
+			JOptionPane.showMessageDialog(this, e.toString() + "Não foi possível assinar o documento");
 		} finally {
 			//update list to show
 //            ArrayList<WorkFile> updatedFileList = new ArrayList<WorkFile>();
